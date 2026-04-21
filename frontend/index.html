@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>V.E.A Wallet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080b10;
+      --bg2: #0d1117;
+      --surface: #111820;
+      --surface2: #161e28;
+      --border: rgba(255,255,255,0.07);
+      --gold: #c9a84c;
+      --gold2: #f0d080;
+      --gold-glow: rgba(201,168,76,0.18);
+      --green: #3dffa0;
+      --red: #ff4f6a;
+      --text: #e8eaf0;
+      --muted: #5a6070;
+      --accent: #1e9fff;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── NOISE OVERLAY ─── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.025;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* ─── BACKGROUND GLOW ─── */
+    .bg-glow {
+      position: fixed;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 700px; height: 700px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(201,168,76,0.07) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── LAYOUT ─── */
+    .app {
+      position: relative; z-index: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* ─── HEADER ─── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      animation: fadeDown 0.6s ease both;
+    }
+
+    .logo {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .logo-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 26px;
+      letter-spacing: 0.04em;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold2) 60%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .header-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 11px;
+      color: var(--green);
+      letter-spacing: 0.1em;
+    }
+
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* ─── BALANCE CARD ─── */
+    .balance-card {
+      background: linear-gradient(145deg, #141c25 0%, #0f1720 100%);
+      border: 1px solid rgba(201,168,76,0.2);
+      border-radius: 24px;
+      padding: 32px 28px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.6s ease 0.1s both;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    .balance-card::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .balance-card::after {
+      content: 'VEA';
+      position: absolute;
+      bottom: 16px; right: 24px;
+      font-family: 'Syne', sans-serif;
+      font-size: 72px;
+      font-weight: 800;
+      color: rgba(255,255,255,0.025);
+      letter-spacing: -4px;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .balance-label {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .balance-amount {
+      font-family: 'Syne', sans-serif;
+      font-size: 42px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .balance-amount.positive { color: var(--text); }
+    .balance-amount.negative { color: var(--red); }
+
+    .balance-trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 14px;
+      font-size: 11px;
+      color: var(--green);
+      background: rgba(61,255,160,0.08);
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    /* ─── ACTIONS ─── */
+    .actions-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: fadeUp 0.6s ease 0.2s both;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .input-wrap {
+      flex: 1;
+      position: relative;
+    }
+
+    .input-wrap span {
+      position: absolute;
+      left: 14px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 13px;
+      pointer-events: none;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      padding: 12px 14px 12px 32px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+    input[type="number"]:focus {
+      border-color: rgba(201,168,76,0.4);
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+    }
+
+    input::placeholder { color: var(--muted); }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      border: none;
+      border-radius: 12px;
+      padding: 13px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    button:active { transform: scale(0.97); }
+
+    .btn-add {
+      background: linear-gradient(135deg, #1a8c4e, #0d6636);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(13,102,54,0.35);
+    }
+
+    .btn-add:hover { filter: brightness(1.1); box-shadow: 0 6px 24px rgba(13,102,54,0.5); }
+
+    .btn-sub {
+      background: linear-gradient(135deg, #8c1a2e, #660d1e);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(102,13,30,0.35);
+    }
+
+    .btn-sub:hover { filter: brightness(1.1); box-shadow: 0 6px 24px rgba(102,13,30,0.5); }
+
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold) 0%, #a07828 100%);
+      color: #1a0e00;
+      box-shadow: 0 4px 20px rgba(201,168,76,0.3);
+    }
+
+    .btn-gold:hover { filter: brightness(1.08); }
+
+    .btn-accent {
+      background: linear-gradient(135deg, var(--accent), #0d6fcc);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(30,159,255,0.25);
+    }
+
+    .btn-accent:hover { filter: brightness(1.1); }
+
+    /* ─── SECTION TITLE ─── */
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: -8px;
+      padding-left: 4px;
+      animation: fadeUp 0.6s ease 0.3s both;
+    }
+
+    /* ─── DEBT CARD ─── */
+    .debt-card {
+      background: var(--surface);
+      border: 1px solid rgba(255,79,106,0.2);
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      animation: fadeUp 0.6s ease 0.35s both;
+    }
+
+    .debt-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .debt-label {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .debt-amount {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--red);
+    }
+
+    .debt-input-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .debt-input-row .input-wrap { flex: 1; }
+
+    /* ─── SIMULATION CARDS ─── */
+    .sim-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: fadeUp 0.6s ease 0.4s both;
+    }
+
+    .sim-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .sim-grid .input-wrap:first-child { grid-column: 1 / -1; }
+
+    .sim-result {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--muted);
+      min-height: 48px;
+      transition: all 0.3s;
+    }
+
+    .sim-result.has-result {
+      border-color: rgba(201,168,76,0.25);
+      color: var(--text);
+    }
+
+    .sim-result .highlight {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--gold2);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    /* ─── HISTORY ─── */
+    .history-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      animation: fadeUp 0.6s ease 0.45s both;
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .history-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .history-count {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    #historico {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    #historico:empty::after {
+      content: 'Nenhuma transação ainda.';
+      display: block;
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      animation: slideIn 0.3s ease both;
+      transition: border-color 0.2s;
+    }
+
+    .history-item:hover { border-color: rgba(201,168,76,0.2); }
+
+    .history-icon {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .history-icon.plus { background: rgba(61,255,160,0.1); }
+    .history-icon.minus { background: rgba(255,79,106,0.1); }
+    .history-icon.pay { background: rgba(201,168,76,0.1); }
+
+    .history-info { flex: 1; }
+
+    .history-desc {
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .history-time {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .history-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .history-val.plus { color: var(--green); }
+    .history-val.minus { color: var(--red); }
+    .history-val.pay { color: var(--gold); }
+
+    /* ─── TOAST ─── */
+    .toast {
+      position: fixed;
+      bottom: 30px; left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 22px;
+      font-size: 13px;
+      color: var(--text);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+      z-index: 1000;
+      transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
+      white-space: nowrap;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { border-color: rgba(61,255,160,0.3); color: var(--green); }
+    .toast.error { border-color: rgba(255,79,106,0.3); color: var(--red); }
+    .toast.info { border-color: rgba(201,168,76,0.3); color: var(--gold); }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    @keyframes pop {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.04); }
+      100% { transform: scale(1); }
+    }
+
+    .popping { animation: pop 0.3s ease; }
+
+    /* ─── DIVIDER ─── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0 -20px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+<div class="toast" id="toast"></div>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">
+      <span class="logo-title">V.E.A Wallet</span>
+      <span class="logo-sub">Financial Dashboard</span>
+    </div>
+    <div class="header-badge">
+      <span class="dot"></span>
+      ATIVO
+    </div>
+  </div>
+
+  <!-- BALANCE -->
+  <div class="balance-card">
+    <div class="balance-label">Saldo disponível</div>
+    <div class="balance-amount positive" id="saldo">R$ 0,00</div>
+    <div class="balance-trend" id="trend">▲ Pronto para operar</div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions-card">
+    <div class="input-row">
+      <div class="input-wrap">
+        <span>R$</span>
+        <input type="number" id="valor" placeholder="0,00" min="0" step="0.01">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-add" onclick="adicionar()">＋ Depositar</button>
+      <button class="btn-sub" onclick="retirar()">－ Retirar</button>
+    </div>
+  </div>
+
+  <!-- DEBT -->
+  <p class="section-title">Dívidas</p>
+  <div class="debt-card">
+    <div class="debt-header">
+      <div>
+        <div class="debt-label">Dívida atual</div>
+        <div class="debt-amount" id="divida">R$ 0,00</div>
+      </div>
+      <span style="font-size:28px">⚠️</span>
+    </div>
+    <div class="debt-input-row">
+      <div class="input-wrap">
+        <span>R$</span>
+        <input type="number" id="valorDivida" placeholder="Valor para pagar" min="0" step="0.01">
+      </div>
+      <button class="btn-gold" onclick="pagarDivida()" style="white-space:nowrap;padding:13px 16px">Pagar</button>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div class="input-wrap" style="flex:1">
+        <span>R$</span>
+        <input type="number" id="novaDiv" placeholder="Adicionar dívida" min="0" step="0.01">
+      </div>
+      <button class="btn-sub" onclick="adicionarDivida()" style="white-space:nowrap;padding:13px 16px">+ Dívida</button>
+    </div>
+  </div>
+
+  <!-- INVESTMENT SIM -->
+  <p class="section-title">Simular Investimento</p>
+  <div class="sim-card">
+    <div class="sim-grid">
+      <div class="input-wrap">
+        <span>R$</span>
+        <input type="number" id="invValor" placeholder="Capital inicial">
+      </div>
+      <div class="input-wrap">
+        <span>%</span>
+        <input type="number" id="invTaxa" placeholder="Taxa mensal" style="padding-left:28px">
+      </div>
+      <div class="input-wrap">
+        <span>mo</span>
+        <input type="number" id="invMeses" placeholder="Meses" style="padding-left:34px">
+      </div>
+    </div>
+    <button class="btn-gold" onclick="simularInvestimento()">📈 Simular Investimento</button>
+    <div class="sim-result" id="resultadoInvestimento">Preencha os campos acima para simular.</div>
+  </div>
+
+  <!-- LOAN SIM -->
+  <p class="section-title">Simular Empréstimo</p>
+  <div class="sim-card">
+    <div class="sim-grid">
+      <div class="input-wrap">
+        <span>R$</span>
+        <input type="number" id="empValor" placeholder="Valor do empréstimo">
+      </div>
+      <div class="input-wrap">
+        <span>%</span>
+        <input type="number" id="empTaxa" placeholder="Taxa mensal" style="padding-left:28px">
+      </div>
+      <div class="input-wrap">
+        <span>mo</span>
+        <input type="number" id="empMeses" placeholder="Parcelas" style="padding-left:34px">
+      </div>
+    </div>
+    <button class="btn-accent" onclick="simularEmprestimo()">💳 Simular Empréstimo</button>
+    <div class="sim-result" id="resultadoEmprestimo">Preencha os campos acima para simular.</div>
+  </div>
+
+  <!-- HISTORY -->
+  <p class="section-title">Movimentações</p>
+  <div class="history-card">
+    <div class="history-header">
+      <span class="history-title">Histórico</span>
+      <span class="history-count" id="histCount">0 transações</span>
+    </div>
+    <ul id="historico"></ul>
+  </div>
+
+</div>
+
+<script>
+  let saldo = 0;
+  let divida = 0;
+  let txCount = 0;
+
+  const fmt = v => 'R$ ' + v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+  function toast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  function updateSaldo() {
+    const el = document.getElementById('saldo');
+    el.textContent = fmt(saldo);
+    el.className = 'balance-amount ' + (saldo >= 0 ? 'positive' : 'negative');
+    el.classList.add('popping');
+    setTimeout(() => el.classList.remove('popping'), 300);
+
+    const trend = document.getElementById('trend');
+    if (saldo > 0) {
+      trend.innerHTML = '▲ Saldo positivo';
+      trend.style.color = 'var(--green)';
+    } else if (saldo < 0) {
+      trend.innerHTML = '▼ Saldo negativo';
+      trend.style.color = 'var(--red)';
+    } else {
+      trend.innerHTML = '▲ Pronto para operar';
+      trend.style.color = 'var(--green)';
+    }
+  }
+
+  function updateDivida() {
+    document.getElementById('divida').textContent = fmt(divida);
+  }
+
+  function addHistory(icon, type, desc, value, valClass) {
+    txCount++;
+    document.getElementById('histCount').textContent = txCount + (txCount === 1 ? ' transação' : ' transações');
+
+    const li = document.createElement('li');
+    li.className = 'history-item';
+    const now = new Date();
+    const time = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    li.innerHTML = `
+      <div class="history-icon ${type}">${icon}</div>
+      <div class="history-info">
+        <div class="history-desc">${desc}</div>
+        <div class="history-time">Hoje às ${time}</div>
+      </div>
+      <div class="history-val ${valClass}">${value}</div>
+    `;
+    const ul = document.getElementById('historico');
+    ul.insertBefore(li, ul.firstChild);
+  }
+
+  function adicionar() {
+    const v = parseFloat(document.getElementById('valor').value);
+    if (!v || v <= 0) return toast('Informe um valor válido.', 'error');
+    saldo += v;
+    updateSaldo();
+    addHistory('↑', 'plus', 'Depósito realizado', '+' + fmt(v), 'plus');
+    document.getElementById('valor').value = '';
+    toast('Depósito de ' + fmt(v) + ' realizado! ✓', 'success');
+  }
+
+  function retirar() {
+    const v = parseFloat(document.getElementById('valor').value);
+    if (!v || v <= 0) return toast('Informe um valor válido.', 'error');
+    if (v > saldo) return toast('Saldo insuficiente!', 'error');
+    saldo -= v;
+    updateSaldo();
+    addHistory('↓', 'minus', 'Saque realizado', '-' + fmt(v), 'minus');
+    document.getElementById('valor').value = '';
+    toast('Saque de ' + fmt(v) + ' realizado.', 'info');
+  }
+
+  function adicionarDivida() {
+    const v = parseFloat(document.getElementById('novaDiv').value);
+    if (!v || v <= 0) return toast('Informe um valor válido.', 'error');
+    divida += v;
+    updateDivida();
+    addHistory('⚠', 'minus', 'Nova dívida adicionada', '+' + fmt(v), 'minus');
+    document.getElementById('novaDiv').value = '';
+    toast('Dívida de ' + fmt(v) + ' registrada.', 'error');
+  }
+
+  function pagarDivida() {
+    const v = parseFloat(document.getElementById('valorDivida').value);
+    if (!v || v <= 0) return toast('Informe um valor válido.', 'error');
+    if (v > divida) return toast('Valor maior que a dívida atual!', 'error');
+    if (v > saldo) return toast('Saldo insuficiente para pagar!', 'error');
+    divida -= v;
+    saldo -= v;
+    updateSaldo();
+    updateDivida();
+    addHistory('✓', 'pay', 'Pagamento de dívida', '-' + fmt(v), 'pay');
+    document.getElementById('valorDivida').value = '';
+    toast('Pagamento de ' + fmt(v) + ' realizado! 🎉', 'info');
+  }
+
+  function simularInvestimento() {
+    const val = parseFloat(document.getElementById('invValor').value);
+    const taxa = parseFloat(document.getElementById('invTaxa').value) / 100;
+    const meses = parseInt(document.getElementById('invMeses').value);
+    const el = document.getElementById('resultadoInvestimento');
+
+    if (!val || !taxa || !meses) return toast('Preencha todos os campos.', 'error');
+
+    const montante = val * Math.pow(1 + taxa, meses);
+    const juros = montante - val;
+    const rendPct = ((montante / val) - 1) * 100;
+
+    el.className = 'sim-result has-result';
+    el.innerHTML = `
+      <span class="highlight">${fmt(montante)}</span>
+      Capital: ${fmt(val)} &nbsp;|&nbsp; Rendimento: <span style="color:var(--green)">+${fmt(juros)}</span><br>
+      Retorno total: <span style="color:var(--gold)">${rendPct.toFixed(2)}%</span> em ${meses} mes${meses>1?'es':''}
+    `;
+  }
+
+  function simularEmprestimo() {
+    const val = parseFloat(document.getElementById('empValor').value);
+    const taxa = parseFloat(document.getElementById('empTaxa').value) / 100;
+    const meses = parseInt(document.getElementById('empMeses').value);
+    const el = document.getElementById('resultadoEmprestimo');
+
+    if (!val || !taxa || !meses) return toast('Preencha todos os campos.', 'error');
+
+    const parcela = taxa === 0 ? val / meses : (val * taxa * Math.pow(1 + taxa, meses)) / (Math.pow(1 + taxa, meses) - 1);
+    const total = parcela * meses;
+    const juros = total - val;
+
+    el.className = 'sim-result has-result';
+    el.innerHTML = `
+      <span class="highlight">${fmt(parcela)}<span style="font-size:12px;font-family:'DM Mono';font-weight:400;color:var(--muted)">/mês</span></span>
+      Total pago: <span style="color:var(--red)">${fmt(total)}</span> &nbsp;|&nbsp; Juros: <span style="color:var(--red)">+${fmt(juros)}</span><br>
+      ${meses} parcela${meses>1?'s':''} de ${fmt(parcela)}
+    `;
+  }
+</script>
+</body>
+</html>

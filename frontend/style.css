@@ -1,0 +1,44 @@
+body {
+margin: 0;
+  font-family: 'Segoe UI', Arial, sans-serif; /* Segoe UI é mais moderna */
+  background: #0d0d0d; /* Cor de riqueza */
+  color: #e0e0e0; /* Texto levemente off-white para não cansar a vista */
+}
+
+.app {
+  max-width: 400px;
+  margin: auto;
+  padding: 20px;
+}
+
+.card {
+background: #1a1812;
+  padding: 20px;
+  border-radius: 20px;
+  margin-top: 20px;
+  border: 1px solid #bf953f; /* Borda sólida */
+  box-shadow: 0 0 15px rgba(191, 149, 63, 0.3); /* Brilho externo */
+}
+
+.actions {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+input, button {
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+}
+
+button:nth-child(2) {
+  background: green;
+  color: white;
+}
+
+button:nth-child(3) {
+  background: red;
+  color: white;
+}

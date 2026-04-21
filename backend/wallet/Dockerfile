@@ -2,7 +2,7 @@ FROM maven:3.9-eclipse-temurin-17
 
 WORKDIR /app
 
-COPY . .
+COPY wallet ./wallet
 
 RUN mvn -f wallet/pom.xml clean package -DskipTests
 

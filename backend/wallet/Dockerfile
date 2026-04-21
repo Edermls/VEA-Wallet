@@ -4,8 +4,8 @@ WORKDIR /app
 
 COPY . .
 
-RUN mvn clean package -DskipTests
+RUN mvn -f backend/pom.xml clean package -DskipTests
 
 EXPOSE 8080
 
-CMD ["java", "-jar", "target/*.jar"]
+CMD sh -c "java -jar backend/target/*.jar"

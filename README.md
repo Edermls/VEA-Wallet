@@ -106,7 +106,7 @@ src/
 
 ## 👨‍💻 Autor
 
-Desenvolvido por **Eder Sousa**
+Desenvolvido por **Eder Sousa** e **Vinicius Melo**
 
 ---
 

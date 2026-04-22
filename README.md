@@ -72,12 +72,6 @@ http://localhost:8080
 
 ---
 
-## 🌐 Versão online
-
-> (adicione aqui o link do Render quando subir)
-
----
-
 ## 📂 Estrutura do projeto
 
 ```
